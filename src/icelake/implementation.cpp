@@ -262,9 +262,6 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
     non_ascii += utf8_count_non_ascii(utf8);
     checker.check_next_input(utf8);
     if (checker.errors()) {
-      if (count != 0) {
-        count--;
-      } // Sometimes the error is only detected in the next chunk
       utf8_result res = scalar::utf8::rewind_and_validate_with_counts(
           reinterpret_cast<const char *>(buf),
           reinterpret_cast<const char *>(buf + count), len - count);
@@ -286,9 +283,6 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
   }
   checker.check_eof();
   if (checker.errors()) {
-    if (count != 0) {
-      count--;
-    } // Sometimes the error is only detected in the next chunk
     utf8_result res = scalar::utf8::rewind_and_validate_with_counts(
         reinterpret_cast<const char *>(buf),
         reinterpret_cast<const char *>(buf + count), len - count);
@@ -298,7 +292,8 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
     res.non_ascii_count += non_ascii;
     return res;
   }
-  return utf8_result(error_code::SUCCESS, len, continuations, four_byte_leads, non_ascii);
+  return utf8_result(error_code::SUCCESS, len, continuations, four_byte_leads,
+                     non_ascii);
 }
 #endif // SIMDUTF_FEATURE_UTF8
 
