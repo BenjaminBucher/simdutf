@@ -257,9 +257,6 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
   size_t non_ascii{0};
   for (; end - ptr >= 64; ptr += 64) {
     const __m512i utf8 = _mm512_loadu_si512((const __m512i *)ptr);
-    continuations += utf8_count_continuations(utf8);
-    four_byte_leads += utf8_count_4_byte_leads(utf8);
-    non_ascii += utf8_count_non_ascii(utf8);
     checker.check_next_input(utf8);
     if (checker.errors()) {
       utf8_result res = scalar::utf8::rewind_and_validate_with_counts(
@@ -271,14 +268,14 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
       res.non_ascii_count += non_ascii;
       return res;
     }
-    count += 64;
-  }
-  if (end != ptr) {
-    const __m512i utf8 = _mm512_maskz_loadu_epi8(
-        ~UINT64_C(0) >> (64 - (end - ptr)), (const __m512i *)ptr);
     continuations += utf8_count_continuations(utf8);
     four_byte_leads += utf8_count_4_byte_leads(utf8);
     non_ascii += utf8_count_non_ascii(utf8);
+    count += 64;
+  }
+  const __m512i utf8 = _mm512_maskz_loadu_epi8(
+      ~UINT64_C(0) >> (64 - (end - ptr)), (const __m512i *)ptr);
+  if (end != ptr) {
     checker.check_next_input(utf8);
   }
   checker.check_eof();
@@ -291,6 +288,10 @@ simdutf_warn_unused utf8_result implementation::validate_utf8_with_counts(
     res.four_byte_count += four_byte_leads;
     res.non_ascii_count += non_ascii;
     return res;
+  } else {
+    continuations += utf8_count_continuations(utf8);
+    four_byte_leads += utf8_count_4_byte_leads(utf8);
+    non_ascii += utf8_count_non_ascii(utf8);
   }
   return utf8_result(error_code::SUCCESS, len, continuations, four_byte_leads,
                      non_ascii);
