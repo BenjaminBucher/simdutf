@@ -758,13 +758,13 @@ simdutf_really_inline size_t utf8_count_non_ascii(__m512i input) {
 }
 
 simdutf_really_inline size_t utf8_count_continuations(__m512i input) {
-  __m512i mask_8080_8080 = _mm512_set1_epi32(0x80808080);
-  __mmask64 continuation_mask = _mm512_cmpeq_epi8_mask(input, mask_8080_8080);
+  __m512i mask_c0c0_c0c0 = _mm512_set1_epi32(0xc0c0c0c0);
+  __mmask64 continuation_mask = _mm512_cmplt_epi8_mask(input, mask_c0c0_c0c0);
   return count_ones(continuation_mask);
 }
 
 simdutf_really_inline size_t utf8_count_4_byte_leads(__m512i input) {
   __m512i mask_f0f0_f0f0 = _mm512_set1_epi32(0xf0f0f0f0);
-  __mmask64 four_byte_lead_mask = _mm512_cmpeq_epi8_mask(input, mask_f0f0_f0f0);
+  __mmask64 four_byte_lead_mask = _mm512_cmpge_epu8_mask(input, mask_f0f0_f0f0);
   return count_ones(four_byte_lead_mask);
 }
